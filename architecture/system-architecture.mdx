@@ -1,0 +1,70 @@
+---
+title: System Architecture
+description: End-to-end flow for AlphaEngine with the CoFHE processor, EigenCompute, and Uniswap v4
+---
+---
+
+## Components
+
+<CardGroup cols={2}>
+  <Card title="AlphaEngine contracts" icon="code">
+    Uniswap v4 hook + shielded vault that stores encrypted balances, queues intents, and settles batches.
+  </Card>
+  <Card title="CoFHE processor" icon="lock">
+    Performs encrypted math, validates constraints, and reveals only what operators are permitted to open.
+  </Card>
+  <Card title="EigenCompute Operators" icon="server">
+    Restaked operator set that decrypts (when allowed), simulates, nets orders, and signs settlement payloads.
+  </Card>
+  <Card title="Frontend + SDK" icon="browser">
+    Encrypts user inputs, submits multiple trades in one session, and tracks batch lifecycle through settlement.
+  </Card>
+</CardGroup>
+
+## Data Flow
+
+1. **Encrypt & submit** — The frontend encrypts intents (amounts, bounds, route hints) using the published CoFHE key and submits to the hook.
+2. **Queue & permission** — The hook records ciphertext handles, associates epochs, and grants decrypt rights to the operator quorum.
+3. **Batch & simulate** — Operators pull the epoch buffer, request decrypt where allowed, run Universal Trade Intent simulations, and compute net flows.
+4. **Attest & settle** — Operators sign the batch result; the hook verifies quorum signatures, applies encrypted internal transfers, and executes the net swap on-chain.
+5. **Return results** — The hook emits events with ciphertext handles for updated balances; frontend decrypts locally where user permissions exist.
+
+## Multi-Trade Support
+
+- **Session-scoped keys**: A single encryption session can produce multiple intents that share metadata (epoch, gas prefs).
+- **Batch netting**: Opposing directions are netted to reduce gas and MEV surface; only the net delta hits the pool.
+- **Fairness**: Intents carry deadlines; expired intents are dropped before netting to avoid toxic flow.
+
+## Universal Trade Intent (UTI)
+
+- **Simulation**: Operators simulate routes off-chain (AMMs, bridges, lending) under FHE or after permitted decrypt.
+- **Validation**: Policy checks ensure slippage, asset allowlists, and gas bounds before settlement.
+- **Outputs**: A signed result bundle includes the net swap, internal transfers, and per-intent settlement handles.
+
+## On-Chain Contracts (Hook)
+
+- **Encrypted balances**: `mapping(token => mapping(user => euint256))` with contract and sender permissions.
+- **Intent buffer**: Stores ciphertext handles plus deadlines and token pairs.
+- **Batch settle**: Applies encrypted internal transfers first, then executes public net swap via Uniswap v4.
+- **Events**: Emit batch IDs, Merkle roots, and per-intent settlement handles for frontend tracking.
+
+## Failure & Safety Rails
+
+- **Timeouts**: Batches carry TTL; if no quorum attests, intents can be reclaimed or rolled into the next batch.
+- **Replay protection**: Nonces and epochs prevent reusing ciphertexts across batches.
+- **Fallback exits**: Users can withdraw plaintext balances that were never consumed by a batch (vault exit path).
+- **Operator accountability**: Attestations are signed; misbehavior can be challenged and escalated to slashing.
+
+## Component deep dive
+
+- **Hook & encrypted tokens**: Store encrypted balances, queue intents, and settle batches while exposing strategy submission entry points.
+- **Strategy manager & AVS**: Maintain epoch state, permissions, and aggregated performance reports for EigenCompute operators.
+- **Frontend**: Encrypts intents, submits multi-trade sessions, and monitors Nexus-dispatched executions.
+- **Docs & specs**: Centralize UEI, AVS, and migration plans so coprocessor swaps stay consistent.
+
+## See also
+
+- End-to-end sequence: [Confidential Liquidity Flow](/architecture/confidential-liquidity-flow)
+- Strategy path: [Strategy Lifecycle](/architecture/strategy-lifecycle)
+- Compute layer: [CoFHE processor](/compute/cofhe-coprocessor) and [EigenCompute & operators](/compute/eigencompute-operators)
+- Run it locally: [Quickstart](/guides/quickstart)

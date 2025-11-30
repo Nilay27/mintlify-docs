@@ -1,0 +1,57 @@
+---
+title: CoFHE Processor Primer
+description: How the CoFHE processor powers private intents inside AlphaEngine
+---
+---
+
+<Callout>
+  AlphaEngine treats the compute layer as a **CoFHE processor**. Keep to the
+  abstraction and you can swap providers without changing flows.
+</Callout>
+
+## What the CoFHE processor does
+
+- **Encrypts at the edge**: Clients encrypt amounts, directions, and constraints before leaving the browser.
+- **Computes on ciphertexts**: Core arithmetic (add, select, compare) runs without decryption, enabling routing and batching while data stays opaque.
+- **Controlled reveals**: Decryption is only allowed for attested operators during simulation and settlement.
+- **Deterministic handles**: Ciphertext handles are returned to the contracts so we never store plaintext on-chain.
+
+## How it works (quick)
+
+- **Keygen**: Operators provision an FHE key pair. The public key is shipped to clients; the secret key lives in the coprocessor enclave.
+- **Encrypt**: Frontend libraries turn user inputs into ciphertexts (`ctAmount`, `ctMinOut`, `ctDirection`).
+- **Compute**: The coprocessor executes arithmetic gates, producing encrypted aggregates (e.g., net order flow).
+- **Decrypt (permitted)**: Only after operator quorum and policy checks do we decrypt to simulate or settle. Contracts never see the plaintext.
+
+## Coprocessor Responsibilities
+
+- **Intent validation**: Enforce bounds (minOut, deadlines, token allowlists) under encryption.
+- **Batch math**: Sum and net orders to minimize on-chain hops and MEV surface.
+- **UTI simulation**: Run Universal Trade Intent sims over candidate routes before posting results to the chain.
+- **Proof artifacts**: Return receipts/attestations that EigenCompute operators can sign and post.
+
+## Trust & Access Model
+
+- **Public key distribution**: Shipped in the frontend bundle and cached; rotate via config.
+- **Decryption permissions**: Contracts tag intent handles with `allow(operatorQuorum)` to limit who can open data.
+- **Replay protection**: Intents carry nonces/epochs; coprocessor rejects stale ciphertexts.
+- **Data retention**: No plaintext persisted; ciphertext retained only for audit windows.
+
+## Performance Notes
+
+- **Latency**: Expect ~sub-second client encryption; coprocessor batch compute is sized for multi-intent epochs.
+- **Batch sizing**: Larger batches improve privacy (better netting) but add queueing delay; tune per market.
+- **Footguns**: Mixing keys across sessions breaks decryption; ensure all clients use the latest published public key.
+
+## Inputs & Outputs
+
+- **Inputs**: ciphertext handles (`ctAmount`, `ctMinOut`, `ctSlippage`), market ID/pool key, expiry, user-signed metadata.
+- **Outputs**: encrypted batch nets, per-intent settlement handles, simulation receipts, optional decrypted nets (for execution only).
+
+## Observability
+
+- Emit per-batch metrics: queue depth, batch duration, match rate, decrypt success rate.
+- Log policy failures: out-of-bounds intents, expired sessions, invalid proofs.
+- Surface operator IDs participating in decryption to correlate with EigenCompute attestations.
+
+See also: [EigenCompute & operators](/compute/eigencompute-operators) and [System architecture](/architecture/system-architecture).

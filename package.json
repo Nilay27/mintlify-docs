@@ -1,0 +1,16 @@
+{
+  "name": "alphaengine-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AlphaEngine documentation (Mintlify)",
+  "scripts": {
+    "dev": "mintlify dev",
+    "start": "mintlify dev"
+  },
+  "devDependencies": {
+    "mintlify": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

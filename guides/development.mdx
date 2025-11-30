@@ -1,0 +1,73 @@
+---
+title: Development
+description: Build and iterate on AlphaEngine locally: contracts, operator, frontend, and docs
+---
+---
+
+<Info>
+  Focused on the protocol, operator, and frontend. Docs preview instructions are
+  at the end if you’re editing this repo.
+</Info>
+
+## Stack Overview
+
+- **Contracts**: Uniswap v4 hook + shielded vault in `packages/fhevm-hardhat-template`.
+- **Operator**: EigenCompute runner + CoFHE processor client in `packages/fhevm-hardhat-template/avs`.
+- **Frontend**: Encrypts intents, submits multi-trade sessions, and tracks batches.
+- **Docs**: MDX content in `mintlify-docs`.
+
+## Local Dev Loop
+
+1) **Start a chain**
+```bash
+anvil
+```
+
+2) **Deploy contracts**
+```bash
+cd packages/fhevm-hardhat-template
+npx hardhat deploy --network localhost
+```
+
+3) **Run operator**
+```bash
+cd packages/fhevm-hardhat-template/avs
+pnpm install
+pnpm run start:operator   # points to your CoFHE processor endpoint
+```
+
+4) **Run frontend**
+```bash
+cd packages/site   # or the UI package path
+pnpm install
+pnpm run dev
+```
+
+5) **Iterate**
+- Tweak batch duration, max intents, and coprocessor endpoint in config.
+- Use mock ciphertext fixtures to exercise UI flows without a live coprocessor.
+- Add contract tests for edge cases: expired intents, minOut violations, replay protection.
+
+## Environment Configuration
+
+- **CoFHE public key**: shipped to the frontend; rotate via config.
+- **Operator endpoints**: URL + credentials for the CoFHE processor.
+- **Networks**: RPC URLs for Ethereum (or Anvil) and any L2s used in UTI simulations.
+- **Telemetry**: enable metrics/logging for decrypt latency and match success rate.
+
+## Testing Pointers
+
+- **Contracts**: Hardhat/Forge tests for balance math, access control, and batch settlement.
+- **Operator**: Integration harness for decrypt → simulate → attest paths; ensure policy failures are surfaced.
+- **Frontend**: Component tests with mocked events; verify state transitions (queued → simulating → settling → finalized).
+
+## Preview these docs
+
+```bash
+npx mintlify@latest dev
+# visit http://localhost:3000
+```
+
+Use `--port 3333` if 3000 is taken.
+
+See also: [Quickstart](/guides/quickstart), [System architecture](/architecture/system-architecture), and [EigenCompute & operators](/compute/eigencompute-operators).

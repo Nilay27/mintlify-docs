@@ -1,0 +1,88 @@
+---
+title: Quickstart
+description: Spin up AlphaEngine locally with the CoFHE processor and EigenCompute operator
+---
+---
+
+## What you get
+
+- Uniswap v4 hook + shielded vault for encrypted balances and intents.
+- CoFHE processor integration for encrypted math and controlled decrypts.
+- EigenCompute operator flow for simulation, matching, and attested settlement.
+- Frontend that encrypts orders client-side and tracks batch lifecycle.
+
+## Prerequisites
+
+- Node.js 18+
+- pnpm or npm
+- Hardhat (Foundry optional for testing)
+- Git + a working RPC (e.g., Anvil or Sepolia)
+
+## Clone & Install
+
+```bash
+git clone https://github.com/<your-org>/alphaengine.git
+cd alphaengine
+
+# Install hook + AVS deps (use pnpm or npm)
+pnpm install
+```
+
+## Run locally (suggested terminals)
+
+<AccordionGroup>
+  <Accordion icon="rectangle-terminal" title="1) Local chain">
+    ```bash
+    anvil
+    ```
+    Starts a devnet for contracts and hook deployment.
+  </Accordion>
+
+  <Accordion icon="code" title="2) Deploy hook + vault">
+    ```bash
+    cd packages/fhevm-hardhat-template
+    npx hardhat node            # optional if you want a separate node process
+    npx hardhat deploy --network localhost
+    ```
+    Deploys the AlphaEngine contracts to the local chain.
+  </Accordion>
+
+  <Accordion icon="server" title="3) Start EigenCompute operator">
+    ```bash
+    cd packages/fhevm-hardhat-template/avs
+    pnpm install
+    pnpm run start:operator
+    ```
+    Brings up the operator that pulls batches, decrypts (as allowed), simulates, and attests.
+  </Accordion>
+
+  <Accordion icon="browser" title="4) Frontend">
+    ```bash
+    cd packages/site   # UI package path
+    pnpm install
+    pnpm run dev
+    # open http://localhost:3000
+    ```
+    Encrypts intents in-browser, submits multiple trades per epoch, and shows batch states.
+  </Accordion>
+</AccordionGroup>
+
+## Configure the CoFHE processor
+
+- Set the public key in the frontend config so clients encrypt with the correct key.
+- Point the operator to the coprocessor endpoint. Keep private keys in an enclave/HSM.
+- Align batch duration and max intents per batch to your latency/privacy trade-offs.
+
+## Experience the Flow
+
+- Deposit tokens → receive encrypted balances.
+- Submit multiple encrypted intents in one session (e.g., USDC→USDT, USDT→DAI).
+- Watch the operator pick up the batch, simulate, and attest.
+- See only the net swap hit the pool; decrypt balances locally to view results.
+
+<Callout>
+  Deployments may differ from local mocks. The docs describe full intended
+  functionality; align configs with your chosen coprocessor and network.
+</Callout>
+
+Next steps: read [System architecture](/architecture/system-architecture), [CoFHE processor primer](/compute/cofhe-coprocessor), and the [Development guide](/guides/development).

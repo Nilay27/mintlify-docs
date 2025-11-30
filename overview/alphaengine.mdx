@@ -1,0 +1,124 @@
+---
+title: AlphaEngine Overview
+description: Confidential, multichain liquidity engine for Uniswap v4 hooks powered by a CoFHE processor, EigenCompute operators, and Nexus routing.
+---
+
+AlphaEngine turns Uniswap v4 liquidity into a private, competitive marketplace: intents stay encrypted, batches are net-settled, and restaked operators attest to every move.
+
+{/* ![AlphaEngine cover](/images/deck/alphaengine-01.png) */}
+
+## Problem & why it matters
+
+- **Glass-house swaps**: Showing intent in the mempool leaks size, timing, and direction; MEV picks off orderflow.
+- **Closed-kitchen yield**: LPs must trust one internal team per protocol; real quants won’t ship alpha on transparent rails.
+- **No competition without privacy**: Without encryption, you cannot rank strategies or route liquidity without giving away the recipe.
+
+<Callout>
+  AlphaEngine is a private strategy and execution layer for Uniswap: quants send
+  encrypted strategies and swap intents; we simulate, rank, and route liquidity
+  to the winners—without revealing their edge.
+</Callout>
+
+## Who we serve
+
+- **On-chain LPs and funds** already allocating to stablecoin/Hook liquidity who want competitive, private execution.
+- **Independent quants/strategists** who want to deploy on-chain without leaking alpha.
+- **Traders** who want private swaps and netted settlement that minimizes MEV exposure.
+
+## Why AlphaEngine
+
+![Three broken pillars of DeFi](/images/deck/alphaengine-02.png)
+
+### DeFi’s glass-house problem
+- Swaps telegraph size, timing, and direction; MEV bots front-run and back-run.
+- LPs cannot invite external strategists without leaking their edge.
+- Cross-chain execution introduces more leak points and inconsistent trust.
+
+### The AlphaEngine thesis
+- **Private by default** — intents are encrypted, batched, and only a single net swap hits the chain.
+- **Competition over privilege** — strategists submit encrypted intents, get simulated by EigenCompute operators, and only winning flows deploy.
+- **Multichain without trust trade-offs** — Ethereum-origin attestations travel through the Nexus SDK to L2s with the same privacy and correctness guarantees.
+
+![Opening DeFi’s closed kitchen](/images/deck/alphaengine-03.png)
+
+## Why now
+
+- **Practical CoFHE**: On-chain FHE and coprocessors have matured enough for real-time encrypted flows.
+- **Native integration point**: Uniswap v4 hooks let us embed privacy + batching without forking the AMM.
+- **Market pull**: Stablecoin/yield markets are booming, institutions are moving on-chain, and privacy-by-default is becoming a requirement.
+
+![Why now](/images/deck/alphaengine-04.png)
+
+## What we built
+
+- **AlphaEngine hook**: Uniswap v4 before/after hook that mints encrypted LP shares, queues intents, and exposes a strategy submission surface.
+- **Strategy arena**: Strategists encrypt calldata and compete for allocations; the AVS simulates, ranks, and deploys the winners.
+- **EigenCompute AVS**: Restaked operators decrypt (when permitted), net batches, simulate Universal Trade Intents, and sign settlements.
+- **CoFHE processor**: Runs encrypted math and controlled decrypts; contracts never see plaintext.
+- **Nexus dispatch**: Ethereum-origin batches forward to Base (and other L2s) via Nexus while preserving CoFHE guarantees.
+- **Frontend experience**: Encrypts client-side, submits multi-intent sessions, and tracks batches through settlement.
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    subgraph Client["Client + Frontend"]
+      U[LPs & Strategists]
+      FE[Frontend + SDK<br/>encrypts intents]
+    end
+
+    subgraph Onchain["Ethereum (Sepolia)"]
+      Hook[AlphaEngine Hook<br/>Uniswap v4 before/after]
+      Vault[Encrypted Token Vault<br/>Hybrid FHERC20]
+    end
+
+    subgraph Offchain["CoFHE + EigenCompute"]
+      CoFHE[CoFHE Processor<br/>encrypted math + controlled decrypts]
+      AVS[EigenCompute AVS<br/>decrypt, simulate, attest]
+    end
+
+    subgraph Dispatch["Nexus Dispatch"]
+      Nexus[Nexus SDK<br/>cross-domain relay]
+    end
+
+    subgraph L2s["Target Protocols (Base/other L2s)"]
+      Proto[Aave / Morpho / etc.]
+    end
+
+    U --> FE --> Hook
+    Hook <--> Vault
+    Hook -->|"encrypted intents / batch roots"| AVS
+    AVS -->|"decrypt (permitted) + simulate"| CoFHE
+    CoFHE -->|"encrypted nets / proofs"| AVS
+    AVS -->|"signed settlement"| Hook
+    Hook -->|"net swap"| Proto
+    AVS --> Nexus --> Proto
+    Proto -->|"receipts"| Hook
+    Hook -->|"updated encrypted balances"| FE
+```
+
+- **Privacy wall**: Intents and balances stay encrypted; only netted public flows touch the AMM.
+- **Competitive layer**: Strategists compete via encrypted submissions; EigenCompute attests to winners.
+- **Cross-domain execution**: Nexus relays AVS-approved payloads to L2s with Ethereum-origin attestations.
+
+![One engine, two markets](/images/deck/alphaengine-09.png)
+
+## Key promises
+
+- **Private by default**: Encrypted intents end-to-end; only net public flows touch the pool.
+- **Performance-driven**: Liquidity routes to the best-performing strategies, not the loudest orderflow.
+- **Multichain-ready**: Ethereum-origin attestations travel through Nexus to L2s with the same guarantees.
+
+## Show, don’t tell
+
+- **Three broken pillars**: Low yield, alpha leakage, MEV (see above).
+- **Yield uplift**: [Before](/images/deck/alphaengine-06.png) vs [After](/images/deck/alphaengine-07.png).
+- **Privacy for swaps**: [Without AlphaEngine](/images/deck/alphaengine-10.png) vs [With AlphaEngine](/images/deck/alphaengine-11.png).
+- **Strategy-to-yield path**: [How we increase LP yield](/images/deck/alphaengine-08.png).
+
+## Where to go next
+
+- See the [Confidential Liquidity Flow](/architecture/confidential-liquidity-flow) for the end-to-end swap path.
+- Review the [Strategy Lifecycle](/architecture/strategy-lifecycle) for strategist submissions and multichain dispatch.
+- Jump to the [CoFHE processor primer](/compute/cofhe-coprocessor) and [EigenCompute & operators](/compute/eigencompute-operators) for compute details.
+- Use the [Quickstart](/guides/quickstart) to run contracts, operator, and frontend locally.

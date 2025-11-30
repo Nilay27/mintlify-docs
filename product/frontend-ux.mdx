@@ -1,0 +1,48 @@
+---
+title: Frontend & Multi-Trade UX
+description: How clients encrypt intents, submit multiple trades, and track AlphaEngine batches
+---
+---
+
+## Client Responsibilities
+
+- **Key discovery**: Fetch the published CoFHE public key and cache it for the session.
+- **Local encryption**: Encrypt amounts, minOut, and direction before any network hop.
+- **Multi-trade sessions**: Allow users to queue multiple intents under one epoch/session with shared metadata (gas prefs, deadlines).
+- **State tracking**: Poll batch receipts and render user-friendly states (queued, simulating, settling, finalized).
+
+## Flow in the UI
+
+<AccordionGroup>
+  <Accordion title="1. Connect & Initialize" icon="wallet">
+    Connect wallet, load network (Sepolia/Base), and fetch the CoFHE public key plus operator set ID. Warm up the coprocessor SDK.
+  </Accordion>
+  <Accordion title="2. Encrypt Orders" icon="lock">
+    For each intent, encrypt `amount`, `tokenIn`, `tokenOut`, `minOut`, `deadline`. Bundle multiple intents into a session payload.
+  </Accordion>
+  <Accordion title="3. Submit to Hook" icon="arrow-up-right-from-square">
+    Send ciphertext handles to the AlphaEngine contract. Store the returned `intentId` / `batchHint` for tracking.
+  </Accordion>
+  <Accordion title="4. Observe Batch Lifecycle" icon="circle-nodes">
+    Subscribe to events or poll: queued → picked up by operators → simulated → attested → settled. Surface ETA and any policy failures.
+  </Accordion>
+  <Accordion title="5. Display Results" icon="chart-line">
+    Decrypt user-permitted handles; update balances and show net settlement. Keep historical batches for auditability.
+  </Accordion>
+</AccordionGroup>
+
+## UX Considerations
+
+- **Privacy-first defaults**: Never show plaintext amounts in logs; redact everywhere except local decrypted views.
+- **Batch transparency**: Show batch size, match rate, and operator quorum that signed the result.
+- **Retry logic**: If a batch times out, resubmit the intents with a fresh deadline and note the roll-forward.
+- **Gas handling**: Estimate based on netted swap, not per-intent gas, to avoid scaring users with exaggerated costs.
+
+## Developer Hooks & SDK Usage
+
+- **Encryption helpers**: Wrap FHE SDK calls to output handles plus proof metadata.
+- **Event subscriptions**: Listen for `BatchQueued`, `BatchSettled`, and per-intent settlement events to drive UI state.
+- **Error surfaces**: Map operator policy failures (e.g., minOut violation) into actionable toasts/tooltips.
+- **Testing**: Ship fixtures for mock ciphertexts so the UI can render without a live coprocessor.
+
+See also: [CoFHE processor](/compute/cofhe-coprocessor), [EigenCompute & operators](/compute/eigencompute-operators), and [System architecture](/architecture/system-architecture).

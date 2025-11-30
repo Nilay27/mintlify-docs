@@ -1,0 +1,45 @@
+---
+title: EigenCompute & Operators
+description: How restaked operators run the CoFHE processor workload, match orders, and attest to AlphaEngine
+---
+---
+
+## Role of EigenCompute
+
+- Provides a **restaked security layer** for the CoFHE processor workload.
+- Coordinates **task assignment, quorum selection, and signature aggregation** for each batch.
+- Offers **fault reporting and slashing hooks** when operators fail to decrypt, simulate, or sign correctly.
+
+## Task Lifecycle
+
+1. **Fetch batch** — Operator reads the epoch buffer and intent Merkle root from the hook.
+2. **Decrypt (permitted)** — Uses the CoFHE processor to open ciphertexts where permissions exist.
+3. **Simulate UTI** — Runs Universal Trade Intent simulations for candidate routes and risk rails.
+4. **Match & net** — Aggregates intents, nets opposing flow, computes internal transfers and net public swap.
+5. **Attest** — Produces a receipt containing batchId, net swap, internal transfers, and policy verdicts; signs it for quorum aggregation.
+6. **Submit** — Posts the signed bundle back to the hook; on success, settlement updates encrypted balances and executes the net swap.
+
+## Operator Requirements
+
+- **Keys**: CoFHE secret key (in enclave/HSM), EigenCompute staking keys, and signing key for attestations.
+- **Connectivity**: Access to the chosen CoFHE processor endpoint, Ethereum RPC for the hook, and any L2 RPCs used in UTI simulation.
+- **Observability**: Metrics for decrypt latency, match rate, and attestation success; logs for policy failures.
+
+## Batching & Matching
+
+- **Epoch-based**: Intents are grouped into epochs (configurable duration).
+- **Cross-intent netting**: Internal transfers update encrypted balances directly; only the net delta hits the AMM.
+- **Order fairness**: Enforce deadlines, size bounds, and token allowlists before including an intent in the batch.
+
+## Faults & Recovery
+
+- **Decrypt failures**: If a quorum cannot decrypt, the batch is skipped and intents roll forward.
+- **Policy failures**: Intents violating bounds are flagged and excluded; batch still proceeds with valid intents.
+- **Challenge window**: Attestations can be challenged; slashing escalates through EigenCompute’s fault handlers.
+
+## Outputs to the Frontend
+
+- Batch receipts include: `batchId`, matched pairs, net swap amounts, per-intent settlement handles, and operator set IDs.
+- Frontend polls receipts and updates user-facing states (queued → simulating → settling → finalized).
+
+See also: [CoFHE processor primer](/compute/cofhe-coprocessor), [Strategy lifecycle](/architecture/strategy-lifecycle), and [Deployments](/reference/deployments).

@@ -1,0 +1,48 @@
+---
+title: Core Concepts
+description: How AlphaEngine uses a CoFHE processor and EigenCompute operators to deliver private, batched trading on Uniswap v4
+---
+
+<Callout>
+  AlphaEngine routes trades through a **CoFHE processor** and settles netted
+  flow on Uniswap v4 with **EigenCompute** operator attestations. We use
+  “CoFHE processor” as the generic abstraction throughout.
+</Callout>
+
+## What is AlphaEngine?
+
+- **Private by default**: Users encrypt intents client-side; ciphertexts are queued and settled without exposing amounts or directions on-chain.
+- **Batched & netted**: Multiple trades roll into epochs, matched off-chain, and only the net swap touches the pool, reducing gas and MEV surface.
+- **Attested execution**: Restaked EigenCompute operators decrypt (when permitted), simulate Universal Trade Intents (UTI), sign results, and the contracts verify quorum before settlement.
+
+<CardGroup cols={3}>
+  <Card title="Contracts" icon="code-branch">
+    Uniswap v4 hook + shielded vault store encrypted balances, queue intents, and settle batches.
+  </Card>
+  <Card title="CoFHE processor" icon="lock">
+    Runs encrypted math, validates bounds, and reveals only what operators are permitted to see.
+  </Card>
+  <Card title="EigenCompute" icon="server">
+    Restaked operator set that decrypts (as allowed), simulates, nets orders, and signs settlements.
+  </Card>
+</CardGroup>
+
+## Why this design
+
+- **End-to-end privacy**: No plaintext amounts in mempool; ciphertext handles only.
+- **Fair batching**: Epoch-based matching reduces leakage and improves execution quality.
+- **Modular compute**: Swap between CoFHE providers without changing contracts.
+- **Operator accountability**: Signature quorum + challenge paths ensure correctness.
+
+## Key Flows
+
+- **Intent submission**: Users encrypt `amount`, `tokenIn`, `tokenOut`, `minOut`, and `deadline` via the frontend SDK, then submit to the hook.
+- **Batch processing**: The hook groups intents into epochs, grants decrypt rights to the operator quorum, and exposes batch roots.
+- **UTI simulation & matching**: Operators simulate Universal Trade Intents over candidate routes, net opposing flow, and produce a signed result bundle.
+- **Settlement**: The hook verifies signatures, applies encrypted internal transfers, and executes only the net swap on-chain. Events carry ciphertext handles for updated balances.
+
+## Where to go next
+
+- Start with the [Quickstart](/guides/quickstart) to run the stack locally.
+- Read the [CoFHE processor primer](/compute/cofhe-coprocessor) to understand encryption, permissions, and performance expectations.
+- Dive into [System Architecture](/architecture/system-architecture) and [EigenCompute & Operators](/compute/eigencompute-operators) to see how batching, matching, and attestations work.

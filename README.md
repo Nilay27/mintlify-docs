@@ -1,32 +1,25 @@
-# Mintlify Starter Kit
+# AlphaEngine Docs
 
-Click on `Use this template` to copy the Mintlify starter kit. The starter kit contains examples including
+Documentation for AlphaEngine — a confidential, multichain liquidity engine built on Uniswap v4 with a CoFHE processor (Zama or Fhenix), EigenCompute operators, and Nexus dispatch.
 
-- Guide pages
-- Navigation
-- Customizations
-- API Reference pages
-- Use of popular components
+## Structure
 
-### Development
+- `mint.json` – Mintlify config (navigation, branding, colors).
+- `overview/` – high-level positioning and concepts.
+- `architecture/` – system diagram, confidential liquidity flow, and strategy lifecycle.
+- `compute/` – CoFHE processor primer and EigenCompute operator flow.
+- `product/` – frontend and client responsibilities.
+- `guides/` – quickstart and development workflows.
+- `reference/` – deployments and other hard data.
+- `README_ZAMA.md` – source material from the Zama build; flows are generalized in the docs as “CoFHE processor.”
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview the documentation changes locally. To install, use the following command
+## Local preview
 
+```bash
+# from repo root
+npm install          # installs the Mintlify CLI locally
+npm run dev          # or: npx mintlify@latest dev
+# visit http://localhost:3000
 ```
-npm i -g mintlify
-```
 
-Run the following command at the root of your documentation (where mint.json is)
-
-```
-mintlify dev
-```
-
-### Publishing Changes
-
-Install our Github App to auto propagate changes from your repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard. 
-
-#### Troubleshooting
-
-- Mintlify dev isn't running - Run `mintlify install` it'll re-install dependencies.
-- Page loads as a 404 - Make sure you are running in a folder with `mint.json`
+Use `--port 3333` if 3000 is taken. Node 18+ recommended.

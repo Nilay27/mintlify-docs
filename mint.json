@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/schema.json",
-  "name": "AlphaEngine Docs",
+  "name": "AlphaEngine",
   "logo": {
-    "dark": "/logo/dark.svg",
-    "light": "/logo/light.svg"
+    "dark": "/images/AlphaEngine.png",
+    "light": "/images/AlphaEngine.png"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/images/AlphaEngine.png",
   "colors": {
     "primary": "#0D9373",
     "light": "#07C983",
@@ -43,8 +43,7 @@
     }
   ],
   "footerSocials": {
-    "x": "https://x.com/mintlify",
-    "github": "https://github.com/mintlify",
-    "linkedin": "https://www.linkedin.com/company/mintsearch"
+    "x": "https://x.com/0xalphaengine",
+    "github": "https://github.com/Nilay27/AlphaEngine"
   }
 }
